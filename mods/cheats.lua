@@ -481,16 +481,35 @@ local function drawMenu()
     if not menu then return end
     enable_time_stop_including_mario()
 
+    -- Get screen dimensions
+    local screenWidth = djui_hud_get_screen_width()
+    local screenHeight = djui_hud_get_screen_height()
+
+    -- Adjust menuScale based on screen width
+	local widthScale = screenWidth / screenWidth
+    local heightScale = screenHeight / screenHeight
+    menuScale = math.min(widthScale, heightScale)
+
+    -- Set background color and render background rectangle
     djui_hud_set_color(0, 0, 0, 200)
-    djui_hud_render_rect(0, 0, 10000, 10000)
+    djui_hud_render_rect(0, 0, screenWidth, screenHeight)
 
     -- Set text color and position for the title
-    local titleX = ((djui_hud_get_screen_width() - djui_hud_measure_text(menuTitle) * menuScale * 2.5) / 2.1)
+    local titleScale = menuScale * 2.5
+    local titleWidth = djui_hud_measure_text(menuTitle) * titleScale
+    local titleX = (screenWidth - titleWidth) / 2.1
+
+    -- Adjust title position if it's out of bounds
+    if titleX < 0 then
+        titleX = 0
+    elseif (titleX + titleWidth) > screenWidth then
+        titleX = screenWidth - titleWidth
+    end
 
     -- Draw the title
     djui_hud_set_color(255, 255, 255, 255)
     djui_hud_set_font(FONT_HUD)
-    djui_hud_print_text(menuTitle, titleX, titleY, menuScale * 2.5)
+    djui_hud_print_text(menuTitle, titleX, titleY, titleScale)
     djui_hud_set_font(FONT_NORMAL)
 
     -- Set text color and position for the menu options
@@ -499,26 +518,48 @@ local function drawMenu()
     local rectPadding = 5
 
     for i, option in ipairs(menuOptions) do
-        local textWidth = djui_hud_measure_text(option.label)
-        local textX = (djui_hud_get_screen_width() - textWidth * menuScale) / 2
+        local textWidth = djui_hud_measure_text(option.label) * menuScale
+        local textX = (screenWidth - textWidth) / 2
+
+        -- Adjust textX position if it's out of bounds
+        if textX < rectPadding then
+            textX = rectPadding
+        elseif (textX + textWidth) > (screenWidth - rectPadding) then
+            textX = screenWidth - rectPadding - textWidth
+        end
 
         if i == selectedOption then
             -- Draw black rectangle behind the selected option
-                    -- Draw the description with a smaller scale
-            local descX = (djui_hud_get_screen_width() - djui_hud_measure_text(option.description) * (menuScale - 0.5)) / 2
-            local descY = 850
+            local descScale = menuScale - 0.5
+            local descWidth = djui_hud_measure_text(option.description) * descScale
+            local descX = (screenWidth - descWidth) / 2
+            local descY = screenHeight - 50 -- Position description near the bottom
+
+            -- Adjust descX position if it's out of bounds
+            if descX < 0 then
+                descX = 0
+            elseif (descX + descWidth) > screenWidth then
+                descX = screenWidth - descWidth
+            end
+
             djui_hud_set_color(255, 255, 255, 255)
             djui_hud_set_font(FONT_NORMAL)
-            djui_hud_print_text(option.description, descX, descY, menuScale - 0.5)
-            local optionWidth = textWidth * menuScale + rectPadding * 2
+            djui_hud_print_text(option.description, descX, descY, descScale)
+
+            local optionWidth = textWidth + rectPadding * 2
             local optionHeight = 16 * menuScale + rectPadding * 2
+
+            -- Ensure the rectangle fits within the screen
+            optionWidth = math.min(optionWidth, screenWidth - 2 * rectPadding)
+            local rectX = math.max(textX - rectPadding, rectPadding)
+
             djui_hud_set_color(0, 255, 255, 150)
-            djui_hud_render_rect(textX - rectPadding, (textY + (i - 1) * textSpacing - rectPadding) + 15, optionWidth, optionHeight + 5)
+            djui_hud_render_rect(rectX, (textY + (i - 1) * textSpacing - rectPadding) + 15, optionWidth, optionHeight + 5)
         end
 
         -- Set text color based on the status
         if option.status == nil then
-            djui_hud_set_color(255, 255, 255, 255) -- Green for "On"
+            djui_hud_set_color(255, 255, 255, 255) -- White for neutral
         elseif option.status then
             djui_hud_set_color(0, 255, 0, 255) -- Green for "On"
         else
