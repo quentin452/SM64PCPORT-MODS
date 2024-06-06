@@ -554,7 +554,7 @@ local function drawMenu()
             local rectX = math.max(textX - rectPadding, rectPadding)
 
             djui_hud_set_color(0, 255, 255, 150)
-            djui_hud_render_rect(rectX, (textY + (i - 1) * textSpacing - rectPadding) + 15, optionWidth, optionHeight + 5)
+            djui_hud_render_rect(rectX, (textY + (i - 1) * textSpacing - rectPadding), optionWidth, optionHeight + 5)
         end
 
         -- Set text color based on the status
